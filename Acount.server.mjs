@@ -24,7 +24,7 @@ function handleSomeEvent(data) {
 }
 export function S_U_A(message) {
     message = message.toString();
-    let sign = ''; sign = message; const signupRegex = /S\((.+)\)U$/g;
+    let sign = ''; sign = message; const signupRegex = /S\((.+)\)U$/g; 
     const complateRegex = /%4\?4%Code:(.+)%4\?4%Email:(.+)%4\?4%$/g;
     const loginRegex = /\/Email:([^?]+)\?Password:(.+)Finit%$/g;
     const idRegex = /!ID:([^!]+)!Email:([^!]+)!$/g;

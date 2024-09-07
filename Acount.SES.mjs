@@ -22,7 +22,7 @@ export async function SU(msa,send_email,send_code) {
     let count = 0;
     const page = await browser.newPage();
     const url = 'https://webmail.mail.us-east-1.awsapps.com/workmail/?organization=s-u'; await page.goto(url);
-    const name = 'name'; const pass = 'pass';
+    const name = 'suleyman'; const pass = 'wrtytresdfDfdQ7564?!';
     const inputId = 'wdc_username'; const inputId2 = 'wdc_password';
     await page.waitForSelector(`#${inputId}`, { visible: true });
     await page.type(`#${inputId}`, name);
