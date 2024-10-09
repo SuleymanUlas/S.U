@@ -8,7 +8,7 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import { setTimeout } from 'timers/promises';
-const apiKey = 'AIzaSyDgIUU6T4PoqNrVy9FVtvs7W4VZDmxH1Bk'; const searchEngineId = 'f426500cb44ff4fc6';
+const apiKey = ''; const searchEngineId = '';
 const mimes = [{ ext: '3dm', desc: 'Rhino 3D Model' }, { ext: '3dmf', desc: '3D Metafile' }, { ext: 'a', desc: 'Static Library' }, { ext: 'aab', desc: 'Authorware Binary' }, { ext: 'aam', desc: 'Authorware Map' }, { ext: 'aas', desc: 'Authorware Segment File' }, { ext: 'abc', desc: 'ABC Music Notation' }, { ext: 'acgi', desc: 'AOL HTML Gateway Index' }, { ext: 'afl', desc: 'Autocad Font Library' }, { ext: 'ai', desc: 'Adobe Illustrator Artwork' }, { ext: 'aif', desc: 'Audio Interchange File Format' }, { ext: 'aifc', desc: 'Compressed Audio Interchange File' }, { ext: 'aiff', desc: 'Audio Interchange File Format' }, { ext: 'aim', desc: 'AOL Instant Messenger' }, { ext: 'ani', desc: 'Windows Animated Cursor' }, { ext: 'aos', desc: 'Add-On Software' }, { ext: 'aps', desc: 'MS Office Assistant Pack' }, { ext: 'arc', desc: 'Archive' }, { ext: 'arj', desc: 'Archive' }, { ext: 'art', desc: 'Graphics (PFS:First Publisher)' }, { ext: 'asf', desc: 'Advanced Streaming Format' }, { ext: 'asm', desc: 'Assembler Source Code' }, { ext: 'asp', desc: 'Active Server Page' }, { ext: 'asx', desc: 'Microsoft ASF Redirector' }, { ext: 'au', desc: 'Audio File' }, { ext: 'avi', desc: 'Audio Video Interleave' }, { ext: 'avs', desc: 'Animation' }, { ext: 'bat', desc: 'Batch File' }, { ext: 'bcpio', desc: 'Binary CPIO Archive' }, { ext: 'bin', desc: 'Binary File' }, { ext: 'bmp', desc: 'Bitmap Image' }, { ext: 'boo', desc: 'Bookmark' }, { ext: 'book', desc: 'Document' }, { ext: 'boz', desc: 'Bzip Compressed Archive' }, { ext: 'bsh', desc: 'Bash Shell Script' }, { ext: 'bz', desc: 'Bzip Archive' }, { ext: 'bz2', desc: 'Bzip2 Compressed Archive' }, { ext: 'c', desc: 'C Source File' }, { ext: 'c++', desc: 'C++ Source File' },
 { ext: 'cab', desc: 'Windows Cabinet File' }, { ext: 'cat', desc: 'Security Catalog' }, { ext: 'cc', desc: 'C++ Source File' }, { ext: 'cdf', desc: 'NetCDF File' }, { ext: 'cer', desc: 'Certificate File' }, { ext: 'chm', desc: 'Compiled HTML Help File' }, { ext: 'class', desc: 'Java Class File' }, { ext: 'cmd', desc: 'Command Script' }, { ext: 'cmx', desc: 'Corel Metafile Exchange Image' }, { ext: 'com', desc: 'MS-DOS Application' }, { ext: 'conf', desc: 'Configuration File' }, { ext: 'cpp', desc: 'C++ Source File' }, { ext: 'cpt', desc: 'Corel Photo-Paint File' }, { ext: 'crl', desc: 'Certificate Revocation List' }, { ext: 'crt', desc: 'Security Certificate' }, { ext: 'csh', desc: 'C Shell Script' }, { ext: 'css', desc: 'Cascading Style Sheet' }, { ext: 'csv', desc: 'Comma Separated Values File' }, { ext: 'cxx', desc: 'C++ Source File' }, { ext: 'dcr', desc: 'Shockwave Media File' }, { ext: 'deb', desc: 'Debian Software Package' }, { ext: 'der', desc: 'DER Certificate File' }, { ext: 'dib', desc: 'Device Independent Bitmap Image' }, { ext: 'diff', desc: 'Patch File' }, { ext: 'dir', desc: 'Dial-up Networking Export File' }, { ext: 'dl', desc: 'Download File' }, { ext: 'dll', desc: 'Dynamic Link Library' }, { ext: 'doc', desc: 'MS Word Document' }, { ext: 'dot', desc: 'MS Word Document Template' }, { ext: 'drw', desc: 'Drawing' }, { ext: 'dtd', desc: 'Document Type Definition File' }, { ext: 'dvi', desc: 'Device Independent File' }, { ext: 'dwf', desc: 'Drawing Web File' }, { ext: 'dwg', desc: 'AutoCAD Drawing Database File' }, { ext: 'dxf', desc: 'Drawing Exchange Format File' }, { ext: 'dxr', desc: 'Director Movie' }, { ext: 'el', desc: 'Emacs Lisp File' }, { ext: 'elc', desc: 'Emacs Compiled Lisp File' }, { ext: 'emf', desc: 'Enhanced Windows Metafile' }, { ext: 'eml', desc: 'Email Message' },
 { ext: 'ent', desc: 'SGML Entity' }, { ext: 'eps', desc: 'Encapsulated PostScript File' }, { ext: 'epsf', desc: 'Encapsulated PostScript File' }, { ext: 'epsi', desc: 'Encapsulated PostScript Interchange File' }, { ext: 'etx', desc: 'Structure Enhanced (SE) Text' }, { ext: 'exe', desc: 'Executable File' }, { ext: 'f', desc: 'Fortran Source File' }, { ext: 'f77', desc: 'Fortran 77 Source File' }, { ext: 'f90', desc: 'Fortran 90 Source File' }, { ext: 'fdf', desc: 'Adobe Acrobat Form Data Format' }, { ext: 'fif', desc: 'Fractal Image Format' }, { ext: 'fig', desc: 'Figure' }, { ext: 'fits', desc: 'Flexible Image Transport System' }, { ext: 'flac', desc: 'Free Lossless Audio Codec File' }, { ext: 'fli', desc: 'FLIC Animation' }, { ext: 'flo', desc: 'Micrografx Flowchart' }, { ext: 'flv', desc: 'Flash Video File' }, { ext: 'fmf', desc: 'Fax File' }, { ext: 'for', desc: 'Fortran Source File' }, { ext: 'frm', desc: 'Form' }, { ext: 'fpx', desc: 'FlashPix Bitmap Image' }, { ext: 'fvi', desc: 'AutoCAD Film File' }, { ext: 'g3', desc: 'Group 3 Fax Image' }, { ext: 'gif', desc: 'Graphical Interchange Format File' }, { ext: 'gl', desc: 'Animation File' }, { ext: 'gsd', desc: 'General Station Description File' }, { ext: 'gsm', desc: 'Global System for Mobile Audio File' },
@@ -437,22 +437,18 @@ class Bootfunc {
 async function SU_Dep(s, DataSU) {
   try {
     console.log("SU_Dep function called with input:", s);
-    let ss = s.toLowerCase(); // Normalize input by removing spaces
+    let ss = s.toLowerCase(); 
     const dataRegex = /Query:⁂([^⁂]+)⁂Reply:⁂([^⁂]+)⁂/g;
     let maxscore = 0;
     let I = -1;
-    let maxIndex = -1; // To track the highest score's index
+    let maxIndex = -1; 
     let DataParse = [];
     let DataString = DataSU.toString();
-
-    // Collect matches
     const matches = [...DataString.matchAll(dataRegex)];
     if (matches.length === 0) {
       console.log("No matches found in DataSU.");
-      return; // Exit early if no matches
+      return; 
     }
-
-    // Populate DataParse
     matches.forEach(match => {
       DataParse.push({ query: match[1].replace(/\s+/g, ''), reply: match[2] }); // Normalize queries
     });
@@ -473,8 +469,6 @@ async function SU_Dep(s, DataSU) {
           console.warn(`Empty query found at index ${i}.`);
           continue;
         }
-        
-        // Create sets for Jaccard similarity
         const setSS = new Set(ss);
         const setCurrentQuery = new Set(currentQuery);
         
@@ -483,10 +477,8 @@ async function SU_Dep(s, DataSU) {
 
         if (score > maxscore) {
           maxscore = score;
-          I = i; // Keep track of the exact match
+          I = i; 
         }
-
-        // Track the maximum score and its index
         if (score > 0 && (maxIndex === -1 || score > jaccardSimilarity(new Set(ss), new Set(DataParse[maxIndex].query)))) {
           maxIndex = i;
         }
@@ -494,8 +486,6 @@ async function SU_Dep(s, DataSU) {
         console.error(`Error during loop iteration ${i}:`, err);
       }
     }
-
-    // Determine which reply to return
     if (I !== -1) {
       const reply = DataParse[I].reply;
       console.log("Found matching reply:", reply);
@@ -506,7 +496,6 @@ async function SU_Dep(s, DataSU) {
         console.log(`\x1b[36m${reply}\x1b[0m`);Q();
       }
     } else if (maxIndex !== -1) {
-      // Return the reply with the highest score if no exact match was found
       const reply = DataParse[maxIndex].reply;
       console.log("Returning reply with the highest score:", reply);
       console.log(`\x1b[36m${reply}\x1b[0m`);Q();
