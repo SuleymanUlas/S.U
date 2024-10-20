@@ -34,7 +34,7 @@ function Q() {
       {
         type: 'input',
         name: 'question',
-        message: 'Question (type "exit" to quit):'
+        message: 'Question:'
       }
     ])
     .then((answers) => {
