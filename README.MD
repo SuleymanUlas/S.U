@@ -10,5 +10,4 @@ Project Purpose is an AI-supported software that everyone can access on the inte
 </pre>
 
 `Additional features You can convert your files and edit their content with AI. Files such as image, video, pdf, office files are valid.`
-### [WebSite](https://super-user.xyz) 
 ### [Discord](https://discord.gg/3GuFWn2k)
