@@ -7,8 +7,636 @@ import SpellChecker from 'spellchecker';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
+import Typo from 'typo-js';
 import { setTimeout } from 'timers/promises';
 const apiKey = ''; const searchEngineId = '';
+const feel = { Hqx: 0, Aqx: 0, Sqx: 0, Saqx: 0, Suqx: 0, Default: 10 };
+/**     '""""""""""""""""""""'       
+
+*?        e═-a «     ─▄ww⌐  ─~        
+*?
+*?       ▓',  ²M      ▐''[   ]▌       
+*?
+*?       `*''╖µ       ▐''[   ]▌       
+*?
+*?           ";'┐     ▐,'[   ]▌       
+*?
+*?       ▌µ   ▐,  xk  └▌,╕  ,#        
+*?
+*?       `        `      `            
+*?
+        `````````````````````  
+ */
+let email = 'test@mail.com';
+function Q() {
+  inquirer
+    .prompt([
+      {
+        type: 'input',
+        name: 'question',
+        message: 'Question (type "exit" to quit):'
+      }
+    ])
+    .then((answers) => {
+      const query = new UI_SU();
+      query.AI(answers.question, 'test@mail.com').then(() => {
+      }).catch((error) => {
+        console.error('Error:', error);
+        Q();
+      });
+    });
+}
+Q();
+const dictionary = new Typo('en_US');
+const time = new Date();
+const year = time.getFullYear();
+const month = time.getMonth() + 1;
+const day = time.getDate();
+const folderName = `./User/${email}/SuperUser`;
+const fileName = `./User/${email}/SuperUser/${year}_${month}_${day}/memory.sup`;
+if (!fs.existsSync(`./User/${email}//SuperUser/${year}_${month}_${day}`)) { fs.mkdirSync(`./User/${email}//SuperUser/${year}_${month}_${day}`); }
+fs.readFile(fileName, 'utf8', (err, data) => {
+  if (err) {
+    fs.writeFile(fileName, '', (err) => { console.log(err) });
+  }
+});
+class UI_SU {
+  async Monitor() {
+    const monitor = new Monitor();
+    // basic usage
+    monitor.start();
+    // define handler that will always fire every cycle
+    monitor.on('monitor', (event) => {
+      console.log(event.type, 'This event always happens on each monitor cycle!');
+    });
+    // define handler for a too high 1-minute load average
+    monitor.on('loadavg1', (event) => {
+      console.log(event.type, 'Load average is exceptionally high!');
+    });
+    // define handler for a too low free memory
+    monitor.on('freemem', (event) => {
+      console.log(event.type, 'Free memory is very low!');
+    });
+    // define a throttled handler
+    monitor.throttle('loadavg5', (event) => {
+      // whatever is done here will not happen
+      // more than once every 5 minutes(300000 ms)
+
+    }, monitor.minutes(5));
+    // change config while monitor is running
+    monitor.config({
+      freemem: 0.3 // alarm when 30% or less free memory available
+    });
+    // stop monitor
+    monitor.stop();
+    // check whether monitor is running or not
+    monitor.isRunning(); // -> true / false
+    // use as readable stream
+    monitor.start({ stream: true }).pipe(process.stdout);
+  }
+  async AI(s, email) {
+    if (s && email) {
+      let Maxquery = 3;
+      let DataSU = [];
+      let returnedOrginal = '';
+      let autoquery = s.replace(/\n/g, '');
+      const emailRegex = /email\+([^+]+)\+txt/g;
+      autoquery = autoquery.replace(emailRegex, (match, emailtxt) => {
+        email = emailtxt;
+        return '';
+      });
+      await this.createDirectories(email, folderName);
+      const filename = await this.getFiles(`./User/${email}/SuperUser`);
+      await this.readData(filename, email, DataSU);
+
+      await this.processQuery(autoquery, returnedOrginal, email, DataSU, Maxquery, s);
+    }
+  }
+
+  async createDirectories(email, folderName) {
+    if (!fs.existsSync('./User')) fs.mkdirSync('./User');
+    if (!fs.existsSync(`./User/${email}`)) {
+      fs.mkdirSync(`./User/${email}`);
+      console.log(`\x1b[32mFolder "${email}" created successfully!\x1b[0m`);
+    }
+    if (!fs.existsSync(folderName)) {
+      fs.mkdirSync(folderName);
+      console.log(`\x1b[32mFolder "${folderName}" created successfully!\x1b[0m`);
+    }
+  }
+
+  async getFiles(dir) {
+    const files = await fsp.readdir(dir);
+    return files.map(file => path.parse(file).name);
+  }
+
+  async readData(filename, email, DataSU) {
+    for (const file of filename) {
+      try {
+        const dataUsed = await fsp.readFile(`./User/${email}/SuperUser/${file}/memory.sup`, 'utf-8');
+        DataSU.push(dataUsed);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+  async processQuery(autoquery, returnedOrginal, email, DataSU, Maxquery, s) {
+    returnedOrginal = s;
+    let question = returnedOrginal;
+    let expressionOK = '';
+    let fix = '';
+    question = autoquery;
+
+    if (returnedOrginal.startsWith('--notfix--')) {
+      question = question.replace(/--notfix--/g, '');
+      await this.auto(question, email, DataSU, Maxquery);
+    } else {
+      const words = question.split(" ");
+      let isMisspelled = false;
+
+      for (let word of words) {
+        if (!dictionary.check(word)) {
+          isMisspelled = true;
+          const corrections = dictionary.suggest(word);
+          fix = corrections.length > 0 ? corrections[0] : word;
+        } else {
+          fix = word;
+        }
+        expressionOK += ' ' + fix;
+      }
+      question = expressionOK.trim();
+
+      if (isMisspelled) {
+        console.log(`\x1b[32mFixed: ${question}\x1b[0m`);
+      }
+
+      await this.auto(question.replace(/\s+/g, ' '), email, DataSU, Maxquery);
+    }
+  }
+  async auto(queryAuto, email, DataSU, Maxquery) {
+    const queryRegex = new RegExp(`Query:⁂${queryAuto}⁂Reply:⁂([^⁂]+)⁂feel=>([^⁂]+)⁂`, 'g');
+    const dataEngineer = await fsp.readFile(`${fileName}`, 'utf8').catch(err => {
+      console.error('Memory error!', err);
+      return '';
+    });
+    if (queryRegex.test(DataSU)) {
+      const maxValue = Math.max(...Object.values(feel));
+      const maxKey = Object.keys(feel).find(key => feel[key] === maxValue);
+      let searchedword = '';
+      switch (maxKey) {
+        case 'Hqx':
+          searchedword = 'Happy';
+          break;
+        case 'Aqx':
+          searchedword = 'Angry';
+          break;
+        case 'Sqx':
+          searchedword = 'Scared';
+          break;
+        case 'Saqx':
+          searchedword = 'Sad';
+          break;
+        case 'Suqx':
+          searchedword = 'Suspect';
+          break;
+        case 'Default':
+          searchedword = 'Default';
+          break;
+        default:
+          break;
+      }
+      let hasLogged = true;
+      let oneload = true;
+      let Remessage = {a: '', b: ''};
+      const matchedTexts = [];
+      let DataS = DataSU.toString();
+
+      DataS.replace(queryRegex, (match, replys, fells) => {
+        matchedTexts.push({ replys, fells });
+        Maxquery--;
+
+        const isSimilar = (a, b) => {
+          const threshold = maxValue / 100;
+          const aLength = a.length;
+          const bLength = b.length;
+          const maxLength = Math.max(aLength, bLength);
+
+          if (maxLength === 0) return false;
+          let commonChars = 0;
+
+          for (let char of a) {
+            if (b.includes(char)) {
+              commonChars++;
+            }
+          }
+
+          return (commonChars / maxLength) >= threshold;
+        };
+        matchedTexts.forEach(({ replys, fells }) => {
+          if (isSimilar(fells, searchedword)) {
+            if (hasLogged) {
+              const randomIndex = Math.floor(Math.random() * matchedTexts.length);
+              const selectedText = matchedTexts[randomIndex].replys;
+              Remessage = {a: selectedText, b: fells};
+              hasLogged = false;
+              const fe = new Fell;
+              switch (fells) {
+                case 'Happy':
+                  fe.Hqx(5);
+                  break;
+                case 'Angry':
+                  fe.Aqx(5);
+                  break;
+                case 'Scared':
+                  fe.Sqx(5);
+                  break;
+                case 'Sad':
+                  fe.Saqx(5);
+                  break;
+                case 'Suspect':
+                  fe.Suqx(5);
+                  break;
+                case 'Default':
+                  fe.Default();
+                  break;
+                default:
+                  break;
+              }
+            }
+          }
+          else if (!isSimilar(fells, searchedword)) {
+            if (oneload) {
+              const randomIndex = Math.floor(Math.random() * matchedTexts.length);
+              const selectedText = matchedTexts[randomIndex].replys;
+              const feeling = matchedTexts[randomIndex].fells;
+              Remessage = {a: selectedText, b: feeling};
+              oneload = false;
+              const fe = new Fell;
+              switch (feeling) {
+                case 'Happy':
+                  fe.Hqx(5);
+                  break;
+                case 'Angry':
+                  fe.Aqx(5);
+                  break;
+                case 'Scared':
+                  fe.Sqx(5);
+                  break;
+                case 'Sad':
+                  fe.Saqx(5);
+                  break;
+                case 'Suspect':
+                  fe.Suqx(5);
+                  break;
+                case 'Default':
+                  fe.Default();
+                  break;
+                default:
+                  break;
+              }
+            }
+          }
+        });
+      });
+      console.log(`\x1b[32m${Remessage.a} => ${Remessage.b}\x1b[0m`);Q();
+    }
+    else if (queryAuto.startsWith('Element')) {
+      const eregex = /Element:([^+]+)\+Setting:([^+]+)\+Search:(.+)/g;
+      queryAuto.replace(eregex, (match, element, setting, search) => {
+        async function Reply() {
+          const go = new Bootfunc; const reply = await go.GoogleExample(search, element, setting);
+          console.log(`\x1b[32m${reply}\x1b[0m`); Q();
+        } Reply();
+      });
+    }
+    else {
+      SU_Dep(queryAuto, DataSU);
+    }
+  }
+}
+class Bootfunc {
+  File(SearchF) {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${SearchF}`;
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        var { items } = data;
+        try {
+          async function lettry() {
+            let allLinks = [];
+            const browser = await puppeteer.launch({ headless: "new" }); const page = await browser.newPage(); var length = items.length;
+            for (var i = 0; i < length; i++) {
+              try { var link = items[i].link; await page.goto(link, { waitUntil: 'domcontentloaded' }, { timeout: 10000 }); page.setDefaultNavigationTimeout(0); const hrefsOnPage = await page.$$eval('a', anchors => anchors.map(a => a.href)); allLinks.push(...hrefsOnPage); } catch { }
+            }
+            let strLink = '';
+            for (var i = 0; i < allLinks.length; i++) {
+              strLink = allLinks[i];
+              const linkRegex = /\.([a-zA-Z0-9]+)$/g;
+              if (strLink.match(linkRegex)) {
+                strLink.replace(linkRegex, (match, one) => {
+                  for (var i = 0; i < mimes.length; i++) {
+                    if (mimes[i].ext == one) {
+                      const reply = `Filenodefetchxqx:304++${strLink}\n${mimes[i].desc}`;
+                      return reply;
+                    }
+                  }
+                });
+              }
+            }
+            await browser.close();
+          } lettry();
+        } catch { }
+      });
+  }
+  async GoogleExample(SearchG, Element, Setting) {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${SearchG}`;
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      const { items } = data;
+
+      if (data && Array.isArray(items) && items.length > 0) {
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
+        let result = [];
+        for (let i = 0; i < items.length; i++) {
+          const link = items[i].link;
+          if (!link) continue;
+          await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 0 });
+          const elementExists = await page.$(Element);
+          if (!elementExists) {
+            result = 'error!';
+            continue;
+          }
+          switch (Setting) {
+            case "html":
+              const htmlResults = await page.$$eval(Element, el => el.map(element => element.innerHTML));
+              result.push(...htmlResults.map(item => item));
+              break;
+
+            case "text":
+              const textResults = await page.$$eval(Element, el => el.map(element => element.innerText));
+              result.push(...textResults.map(item => item));
+              break;
+
+            case "src":
+              const srcResults = await page.$$eval(Element, el => el.map(element => element.src));
+              result.push(...srcResults.map(item => item));
+              break;
+
+            case "href":
+              const hrefResults = await page.$$eval(Element, el => el.map(element => element.href));
+              result.push(...hrefResults.map(item => item));
+              break;
+
+            default:
+              break;
+          }
+          return result;
+        }
+
+        await browser.close();
+      }
+    } catch (err) {
+      console.error('Error occurred:', err);
+    }
+  }
+  async getWikipediaSummary(title) {
+    try {
+      const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+      const response = await fetch(apiUrl);
+      if (response.ok) {
+        const data = await response.json();
+        const shortDescription = data.extract;
+        const imageSource = data.originalimage?.source || null;
+        return { description: shortDescription, image: imageSource };
+      } else {
+        return { description: '', image: '' };
+      }
+    } catch (error) {
+      console.error('Error fetching Wikipedia data:', error.message);
+      return null;
+    }
+  }
+}
+async function SU_Dep(s, DataSU) {
+  try {
+    console.log("SU_Dep function called with input:", s);
+    let ss = s.toLowerCase();
+    const dataRegex = /Query:⁂([^⁂]+)⁂Reply:⁂([^⁂]+)⁂feel=>([^⁂]+)⁂/g;
+    let maxscore = 0;
+    let I = -1;
+    let maxIndex = -1;
+    let DataParse = [];
+    let DataString = DataSU.toString();
+    const matches = [...DataString.matchAll(dataRegex)];
+    if (matches.length === 0) {
+      console.log("No matches found in DataSU.");
+      return;
+    }
+    matches.forEach(match => {
+      DataParse.push({ query: match[1].replace(/\s+/g, ''), reply: match[2], feels: match[3] });
+    });
+    const jaccardSimilarity = (setA, setB) => {
+      const intersection = [...setA].filter(x => setB.has(x));
+      const union = new Set([...setA, ...setB]);
+      return intersection.length / union.size;
+    };
+    for (let i = 0; i < DataParse.length; i++) {
+      try {
+        const currentQuery = DataParse[i].query;
+        if (currentQuery.length === 0) {
+          console.warn(`Empty query found at index ${i}.`);
+          continue;
+        }
+        const setSS = new Set(ss);
+        const setCurrentQuery = new Set(currentQuery);
+
+        const score = jaccardSimilarity(setSS, setCurrentQuery);
+        if (score > maxscore) {
+          maxscore = score; 
+          if (0.9 > score) { maxscore = -1 }
+          I = i;
+        }
+        if (score > 0 && (maxIndex === -1 || score > jaccardSimilarity(new Set(ss), new Set(DataParse[maxIndex].query)))) {
+          maxIndex = i;
+        }
+      } catch (err) {
+        console.error(`Error during loop iteration ${i}:`, err);
+      }
+    }
+    const TrainRegex = /q=>([^⁂]+)⁂r=>([^⁂]+)⁂f=>([^⁂]+)⁂$/g
+    const ControlRegex = /Control:([^⁂]+)⁂$/g;
+    if (TrainRegex.test(s)) {
+      s.replace(TrainRegex, (match, q, r, f) => {
+        async function Retrain() {
+          const retrain = await Train(q, r, f, DataSU);
+          console.log(`\x1b[36m${retrain}\x1b[0m`); Q();
+        } Retrain();
+      });
+    }
+    else if (ControlRegex.test(s)) {
+      s.replace(ControlRegex, (match, num) => {
+        async function Recontrol() {
+          const CONTROL = new Control;
+          const stat = await CONTROL.Status(num);
+          console.log(`\x1b[36m${stat}\x1b[0m`); Q();
+        } Recontrol();
+      });
+    }
+    else if (I !== -1) {
+      const reply = DataParse[I].reply;
+      const feeling = DataParse[I].feels;
+      if (maxscore !== -1) {
+        console.log(`\x1b[36m${reply}=>${feeling}\x1b[0m`); Q();
+        const fe = new Fell;
+        switch (feeling) {
+          case 'Happy':
+            fe.Hqx(5);
+            break;
+          case 'Angry':
+            fe.Aqx(5);
+            break;
+          case 'Scared':
+            fe.Sqx(5);
+            break;
+          case 'Sad':
+            fe.Saqx(5);
+            break;
+          case 'Suspect':
+            fe.Suqx(5);
+            break;
+          case 'Default':
+            fe.Default();
+            break;
+          default:
+            break;
+        }
+      }
+      else {
+        const result = await search(I, ss); Q();
+        for (let i = 0; i < result.length; i++) {
+          console.log(`\x1b[36mImage: ${result[i].image}\nDescription: ${result[i].description}\x1b[0m`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error in SU_Dep:', err);
+  }
+}
+async function search(index, ss) {
+  let resultlist = [];
+  const matchesword = ss.split(" ");
+  let length = matchesword.length;
+  for (let i = 0; i < length; i++) {
+    console.log(matchesword[i]);
+    const wk = new Bootfunc();
+    const result = await wk.getWikipediaSummary(matchesword[i]);
+    if (result) { resultlist.push(result) }
+  }
+  return resultlist;
+}
+class Fell {
+  async Hqx(index) {
+    if (100 >= feel.Hqx) {
+      feel.Hqx = feel.Hqx + index;
+      feel.Aqx = feel.Aqx - index;
+    }
+  }
+  async Aqx(index) {
+    if (100 >= feel.Aqx) {
+      feel.Aqx = feel.Aqx + index;
+      feel.Hqx = feel.Hqx - index;
+    }
+  }
+  async Sqx(index) {
+    if (100 >= feel.Sqx) {
+      feel.Hqx = feel.Hqx - index;
+      feel.Sqx = feel.Sqx + index;
+    }
+  }
+  async Saqx(index) {
+    if (100 >= feel.Saqx) {
+      feel.Hqx = feel.Hqx - index;
+      feel.Saqx = feel.Saqx + index;
+    }
+  }
+  async Suqx(index) {
+    if (100 >= feel.Suqx) {
+      feel.Aqx = feel.Aqx + index;
+      feel.Suqx = feel.Suqx + index;
+      feel.Sqx = feel.Sqx + index;
+      feel.Hqx = feel.Hqx - index;
+    }
+  }
+  async Default() {
+    /**
+     * ?No code becuse not used.
+     */
+  }
+}
+class Control {
+  async Status(code) {
+    let message = '';
+    try {
+      switch (code) {
+        case '0':
+          /**
+           * ? Get Status
+           */
+          message = JSON.stringify(feel);
+          break;
+        case '1':
+          /**
+           * ? Reset
+           */
+          feel = { Hqx: 0, Aqx: 0, Sqx: 0, Saqx: 0, Suqx: 0, Default: 0 };
+          await fsp.rmdir(folderName);
+          message = 'Reset is successful!';
+          break;
+        case '2':
+          /**
+           * ? Feel Reset
+           */
+          feel = { Hqx: 0, Aqx: 0, Sqx: 0, Saqx: 0, Default: 0 };
+          message = 'Feel reset is successful!';
+          break;
+        case '3':
+          /**
+           * ? Fix Diagnostic
+           */
+          message = 'Diagnostic fix is not implemented yet.';
+          break;
+        default:
+          message = 'Invalid code!';
+          break;
+      }
+    } catch (err) {
+      message = `Error: ${err.message}`;
+    }
+    return message;
+  }
+}
+async function Train(q, r, f, DataSU) {
+  let message = '';
+  try {
+    const data = await fsp.readFile(fileName, 'utf8');
+    const control = new RegExp(`Query:⁂${q}⁂Reply:⁂${r}⁂feel=>${f}⁂`, 'g');
+    if (!control.test(DataSU)) {
+      await fsp.writeFile(fileName, `${data}Query:⁂${q}⁂Reply:⁂${r}⁂feel=>${f}⁂`);
+      message = 'Trained!';
+    } else {
+      message = 'Train already!';
+    }
+  } catch (err) {
+    message = `Error: ${err}`;
+  }
+  return message;
+}
+/**
+ * ?      Hqx     Aqx     Sqx    Saqx    Suqx
+ * Todo:"Happy" "Angry" "Scared" "Sad" "Suspect"
+ */
 const mimes = [{ ext: '3dm', desc: 'Rhino 3D Model' }, { ext: '3dmf', desc: '3D Metafile' }, { ext: 'a', desc: 'Static Library' }, { ext: 'aab', desc: 'Authorware Binary' }, { ext: 'aam', desc: 'Authorware Map' }, { ext: 'aas', desc: 'Authorware Segment File' }, { ext: 'abc', desc: 'ABC Music Notation' }, { ext: 'acgi', desc: 'AOL HTML Gateway Index' }, { ext: 'afl', desc: 'Autocad Font Library' }, { ext: 'ai', desc: 'Adobe Illustrator Artwork' }, { ext: 'aif', desc: 'Audio Interchange File Format' }, { ext: 'aifc', desc: 'Compressed Audio Interchange File' }, { ext: 'aiff', desc: 'Audio Interchange File Format' }, { ext: 'aim', desc: 'AOL Instant Messenger' }, { ext: 'ani', desc: 'Windows Animated Cursor' }, { ext: 'aos', desc: 'Add-On Software' }, { ext: 'aps', desc: 'MS Office Assistant Pack' }, { ext: 'arc', desc: 'Archive' }, { ext: 'arj', desc: 'Archive' }, { ext: 'art', desc: 'Graphics (PFS:First Publisher)' }, { ext: 'asf', desc: 'Advanced Streaming Format' }, { ext: 'asm', desc: 'Assembler Source Code' }, { ext: 'asp', desc: 'Active Server Page' }, { ext: 'asx', desc: 'Microsoft ASF Redirector' }, { ext: 'au', desc: 'Audio File' }, { ext: 'avi', desc: 'Audio Video Interleave' }, { ext: 'avs', desc: 'Animation' }, { ext: 'bat', desc: 'Batch File' }, { ext: 'bcpio', desc: 'Binary CPIO Archive' }, { ext: 'bin', desc: 'Binary File' }, { ext: 'bmp', desc: 'Bitmap Image' }, { ext: 'boo', desc: 'Bookmark' }, { ext: 'book', desc: 'Document' }, { ext: 'boz', desc: 'Bzip Compressed Archive' }, { ext: 'bsh', desc: 'Bash Shell Script' }, { ext: 'bz', desc: 'Bzip Archive' }, { ext: 'bz2', desc: 'Bzip2 Compressed Archive' }, { ext: 'c', desc: 'C Source File' }, { ext: 'c++', desc: 'C++ Source File' },
 { ext: 'cab', desc: 'Windows Cabinet File' }, { ext: 'cat', desc: 'Security Catalog' }, { ext: 'cc', desc: 'C++ Source File' }, { ext: 'cdf', desc: 'NetCDF File' }, { ext: 'cer', desc: 'Certificate File' }, { ext: 'chm', desc: 'Compiled HTML Help File' }, { ext: 'class', desc: 'Java Class File' }, { ext: 'cmd', desc: 'Command Script' }, { ext: 'cmx', desc: 'Corel Metafile Exchange Image' }, { ext: 'com', desc: 'MS-DOS Application' }, { ext: 'conf', desc: 'Configuration File' }, { ext: 'cpp', desc: 'C++ Source File' }, { ext: 'cpt', desc: 'Corel Photo-Paint File' }, { ext: 'crl', desc: 'Certificate Revocation List' }, { ext: 'crt', desc: 'Security Certificate' }, { ext: 'csh', desc: 'C Shell Script' }, { ext: 'css', desc: 'Cascading Style Sheet' }, { ext: 'csv', desc: 'Comma Separated Values File' }, { ext: 'cxx', desc: 'C++ Source File' }, { ext: 'dcr', desc: 'Shockwave Media File' }, { ext: 'deb', desc: 'Debian Software Package' }, { ext: 'der', desc: 'DER Certificate File' }, { ext: 'dib', desc: 'Device Independent Bitmap Image' }, { ext: 'diff', desc: 'Patch File' }, { ext: 'dir', desc: 'Dial-up Networking Export File' }, { ext: 'dl', desc: 'Download File' }, { ext: 'dll', desc: 'Dynamic Link Library' }, { ext: 'doc', desc: 'MS Word Document' }, { ext: 'dot', desc: 'MS Word Document Template' }, { ext: 'drw', desc: 'Drawing' }, { ext: 'dtd', desc: 'Document Type Definition File' }, { ext: 'dvi', desc: 'Device Independent File' }, { ext: 'dwf', desc: 'Drawing Web File' }, { ext: 'dwg', desc: 'AutoCAD Drawing Database File' }, { ext: 'dxf', desc: 'Drawing Exchange Format File' }, { ext: 'dxr', desc: 'Director Movie' }, { ext: 'el', desc: 'Emacs Lisp File' }, { ext: 'elc', desc: 'Emacs Compiled Lisp File' }, { ext: 'emf', desc: 'Enhanced Windows Metafile' }, { ext: 'eml', desc: 'Email Message' },
 { ext: 'ent', desc: 'SGML Entity' }, { ext: 'eps', desc: 'Encapsulated PostScript File' }, { ext: 'epsf', desc: 'Encapsulated PostScript File' }, { ext: 'epsi', desc: 'Encapsulated PostScript Interchange File' }, { ext: 'etx', desc: 'Structure Enhanced (SE) Text' }, { ext: 'exe', desc: 'Executable File' }, { ext: 'f', desc: 'Fortran Source File' }, { ext: 'f77', desc: 'Fortran 77 Source File' }, { ext: 'f90', desc: 'Fortran 90 Source File' }, { ext: 'fdf', desc: 'Adobe Acrobat Form Data Format' }, { ext: 'fif', desc: 'Fractal Image Format' }, { ext: 'fig', desc: 'Figure' }, { ext: 'fits', desc: 'Flexible Image Transport System' }, { ext: 'flac', desc: 'Free Lossless Audio Codec File' }, { ext: 'fli', desc: 'FLIC Animation' }, { ext: 'flo', desc: 'Micrografx Flowchart' }, { ext: 'flv', desc: 'Flash Video File' }, { ext: 'fmf', desc: 'Fax File' }, { ext: 'for', desc: 'Fortran Source File' }, { ext: 'frm', desc: 'Form' }, { ext: 'fpx', desc: 'FlashPix Bitmap Image' }, { ext: 'fvi', desc: 'AutoCAD Film File' }, { ext: 'g3', desc: 'Group 3 Fax Image' }, { ext: 'gif', desc: 'Graphical Interchange Format File' }, { ext: 'gl', desc: 'Animation File' }, { ext: 'gsd', desc: 'General Station Description File' }, { ext: 'gsm', desc: 'Global System for Mobile Audio File' },
@@ -130,402 +758,6 @@ const elementsList = [
   "video",    // <video> - video content
   "wbr"       // <wbr> - word break opportunity
 ];
-/**     '""""""""""""""""""""'       
-
-*?        e═-a «     ─▄ww⌐  ─~        
-*?
-*?       ▓',  ²M      ▐''[   ]▌       
-*?
-*?       `*''╖µ       ▐''[   ]▌       
-*?
-*?           ";'┐     ▐,'[   ]▌       
-*?
-*?       ▌µ   ▐,  xk  └▌,╕  ,#        
-*?
-*?       `        `      `            
-*?
-        `````````````````````  
- */
-let email = 'test@mail.com';
-function Q() {
-  inquirer
-    .prompt([
-      {
-        type: 'input',
-        name: 'question',
-        message: 'Question (type "exit" to quit):'
-      }
-    ])
-    .then((answers) => { 
-      if (answers.question.toLowerCase() === 'exit') {
-        console.log('Exiting...');
-        return;
-      }
-
-      const query = new UI_SU();
-      query.AI(answers.question, 'test@mail.com').then(() => {
-      }).catch((error) => {
-        console.error('Error:', error);
-        Q();
-      });
-    });
-}
-Q();
-const time = new Date();
-const year = time.getFullYear();
-const month = time.getMonth() + 1;
-const day = time.getDate();
-const folderName = `./User/${email}/SuperUser`;
-const fileName = `./User/${email}/SuperUser/${year}_${month}_${day}/memory.sup`;
-class UI_SU {
-  async Monitor() {
-    const monitor = new Monitor();
-    // basic usage
-    monitor.start();
-    // define handler that will always fire every cycle
-    monitor.on('monitor', (event) => {
-      console.log(event.type, 'This event always happens on each monitor cycle!');
-    });
-    // define handler for a too high 1-minute load average
-    monitor.on('loadavg1', (event) => {
-      console.log(event.type, 'Load average is exceptionally high!');
-    });
-    // define handler for a too low free memory
-    monitor.on('freemem', (event) => {
-      console.log(event.type, 'Free memory is very low!');
-    });
-    // define a throttled handler
-    monitor.throttle('loadavg5', (event) => {
-      // whatever is done here will not happen
-      // more than once every 5 minutes(300000 ms)
-
-    }, monitor.minutes(5));
-    // change config while monitor is running
-    monitor.config({
-      freemem: 0.3 // alarm when 30% or less free memory available
-    });
-    // stop monitor
-    monitor.stop();
-    // check whether monitor is running or not
-    monitor.isRunning(); // -> true / false
-    // use as readable stream
-    monitor.start({ stream: true }).pipe(process.stdout);
-  }
-  async AI(s, email) {
-    if (s && email) {
-      let Maxquery = 3;
-      let DataSU = [];
-      let returnedOrginal = '';
-      let autoquery = s.replace(/\n/g, '');
-      const emailRegex = /email\+([^+]+)\+txt/g;
-      autoquery = autoquery.replace(emailRegex, (match, emailtxt) => {
-        email = emailtxt;
-        return '';
-      });
-      await this.createDirectories(email, folderName);
-
-      const filename = await this.getFiles(`./User/${email}/SuperUser`);
-      await this.readData(filename, email, DataSU);
-
-      await this.processQuery(autoquery, returnedOrginal, email, DataSU, Maxquery, s);
-    }
-  }
-
-  async createDirectories(email, folderName) {
-    if (!fs.existsSync('./User')) fs.mkdirSync('./User');
-    if (!fs.existsSync(`./User/${email}`)) {
-      fs.mkdirSync(`./User/${email}`);
-      console.log(`\x1b[32mFolder "${email}" created successfully!\x1b[0m`);
-    }
-    if (!fs.existsSync(folderName)) {
-      fs.mkdirSync(folderName);
-      console.log(`\x1b[32mFolder "${folderName}" created successfully!\x1b[0m`);
-    }
-  }
-
-  async getFiles(dir) {
-    const files = await fsp.readdir(dir);
-    return files.map(file => path.parse(file).name);
-  }
-
-  async readData(filename, email, DataSU) {
-    for (const file of filename) {
-      try {
-        const dataUsed = await fsp.readFile(`./User/${email}/SuperUser/${file}/memory.sup`, 'utf-8');
-        DataSU.push(dataUsed);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  }
-
-  async processQuery(autoquery, returnedOrginal, email, DataSU, Maxquery, s) {
-    returnedOrginal = s;
-    let question = returnedOrginal;
-
-    if (question.startsWith('--notfix--')) {
-      question = question.replace(/--notfix--/g, '');
-      return this.auto(question, email, DataSU, Maxquery);
-    }
-
-    const isMisspelled = SpellChecker.isMisspelled(question);
-    if (isMisspelled) {
-      question = this.correctSpelling(question);
-      console.log(`\x1b[32mFixed: ${question}\x1b[0m`);
-    }
-
-    await this.auto(question.toLowerCase().replace(/\s+/g, ' '), email, DataSU, Maxquery);
-  }
-
-  correctSpelling(question) {
-    let expressionOK = '';
-    const expression = question.split(" ");
-    expression.forEach((expF) => {
-      const fix = SpellChecker.isMisspelled(expF)
-        ? SpellChecker.getCorrectionsForMisspelling(expF)[0]
-        : expF;
-      expressionOK += ` ${fix}`;
-    });
-    return expressionOK.trim();
-  }
-
-  async auto(queryAuto, email, DataSU, Maxquery) {
-    const queryRegex = new RegExp(`Query:⁂${queryAuto}⁂Reply:⁂([^⁂]+)⁂`, 'g');
-    const dataEngineer = await fsp.readFile(`${fileName}`, 'utf8').catch(err => {
-      console.error('Memory error!', err);
-      return '';
-    });
-    if (queryRegex.test(dataEngineer)) {
-      const matchedTexts = [];
-      dataEngineer.replace(queryRegex, (match, replys) => {
-        matchedTexts.push(replys);
-        return match;
-      });
-      const randomIndex = Math.floor(Math.random() * matchedTexts.length);
-      const selectedText = matchedTexts[randomIndex];
-      Maxquery -= 1;
-      if (Maxquery > 0) {
-        console.log(`\x1b[32m${selectedText}\x1b[0m`);
-      }
-    }
-    else if (queryRegex.test(DataSU)) {
-      const matchedTexts = []; let DataS = DataSU.toString();
-      DataS.replace(queryRegex, (match, replys) => { matchedTexts.push(replys); return match; });
-      const randomIndex = Math.floor(Math.random() * matchedTexts.length); const selectedText = matchedTexts[randomIndex]; Maxquery = Maxquery - 1;
-      if (Maxquery != 0) { console.log(`\x1b[32m${selectedText}\x1b[0m`); console.log(`\x1b[36m${selectedText}\x1b[0m`); }
-    } 
-    else if (queryAuto.startsWith('Element')) {
-      const eregex = /Element:([^+]+)\+Setting:([^+]+)\+Search:(.+)/g;
-      queryAuto.replace(eregex, (match, element, setting, search) => {
-        const go = new Bootfunc; go.GoogleExample(search, element, setting);
-      });
-    }
-    else {
-      SU_Dep(queryAuto, DataSU);
-    }
-  }
-}
-class Bootfunc {
-  File(SearchF) {
-    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${SearchF}`;
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        var { items } = data;
-        try {
-          async function lettry() {
-            let allLinks = [];
-            const browser = await puppeteer.launch({ headless: "new" }); const page = await browser.newPage(); var length = items.length;
-            for (var i = 0; i < length; i++) {
-              try { var link = items[i].link; await page.goto(link, { waitUntil: 'domcontentloaded' }, { timeout: 10000 }); page.setDefaultNavigationTimeout(0); const hrefsOnPage = await page.$$eval('a', anchors => anchors.map(a => a.href)); allLinks.push(...hrefsOnPage); } catch { }
-            }
-            let strLink = '';
-            for (var i = 0; i < allLinks.length; i++) {
-              strLink = allLinks[i];
-              const linkRegex = /\.([a-zA-Z0-9]+)$/g;
-              if (strLink.match(linkRegex)) {
-                strLink.replace(linkRegex, (match, one) => {
-                  for (var i = 0; i < mimes.length; i++) {
-                    if (mimes[i].ext == one) {
-                      const reply = `Filenodefetchxqx:304++${strLink}\n${mimes[i].desc}`;
-                      console.log(reply)
-                    }
-                  }
-                });
-              }
-            }
-            await browser.close();
-          } lettry();
-        } catch { }
-      });
-  }
-  async GoogleExample(SearchG, Element, Setting) {
-    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${SearchG}`;
-
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      const { items } = data;
-
-      if (data && Array.isArray(items) && items.length > 0) {
-        const browser = await puppeteer.launch({ headless: true });
-        const page = await browser.newPage();
-        let result = [];
-        for (let i = 0; i < items.length; i++) {
-          const link = items[i].link;
-          if (!link) continue;
-          await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 0 });
-          const elementExists = await page.$(Element);
-          if (!elementExists) {
-            result = 'error!';
-            continue;
-          }
-          switch (Setting) {
-            case "html":
-              const htmlResults = await page.$$eval(Element, el => el.map(element => element.innerHTML));
-              result.push(...htmlResults.map(item => item));
-              break;
-
-            case "text":
-              const textResults = await page.$$eval(Element, el => el.map(element => element.innerText));
-              result.push(...textResults.map(item => item));
-              break;
-
-            case "src":
-              const srcResults = await page.$$eval(Element, el => el.map(element => element.src));
-              result.push(...srcResults.map(item => item));
-              break;
-
-            case "href":
-              const hrefResults = await page.$$eval(Element, el => el.map(element => element.href));
-              result.push(...hrefResults.map(item => item));
-              break;
-
-            default:
-              break;
-          }
-
-          if (result && result.length > 0) {
-            console.log(result, 'Google');
-          }
-        }
-
-        await browser.close();
-      }
-    } catch (err) {
-      console.error('Error occurred:', err);
-    }
-  }
-  async getWikipediaSummary(title) {
-    try {
-      const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-      const response = await fetch(apiUrl);
-      if (response.ok) {
-        const data = await response.json();
-        const shortDescription = data.extract;
-        const imageSource = data.originalimage?.source || null;
-        return { description: shortDescription, image: imageSource };
-      } else {
-        throw new Error('Wikipedia API request failed');
-      }
-    } catch (error) {
-      console.error('Error fetching Wikipedia data:', error.message);
-      return null;
-    }
-  }
-}
-async function SU_Dep(s, DataSU) {
-  try {
-    console.log("SU_Dep function called with input:", s);
-    let ss = s.toLowerCase(); 
-    const dataRegex = /Query:⁂([^⁂]+)⁂Reply:⁂([^⁂]+)⁂/g;
-    let maxscore = 0;
-    let I = -1;
-    let maxIndex = -1; 
-    let DataParse = [];
-    let DataString = DataSU.toString();
-    const matches = [...DataString.matchAll(dataRegex)];
-    if (matches.length === 0) {
-      console.log("No matches found in DataSU.");
-      return; 
-    }
-    matches.forEach(match => {
-      DataParse.push({ query: match[1].replace(/\s+/g, ''), reply: match[2] }); // Normalize queries
-    });
-
-    console.log("DataParse:", JSON.stringify(DataParse, null, 2));
-
-    // Jaccard similarity function
-    const jaccardSimilarity = (setA, setB) => {
-      const intersection = [...setA].filter(x => setB.has(x));
-      const union = new Set([...setA, ...setB]);
-      return intersection.length / union.size;
-    };
-
-    for (let i = 0; i < DataParse.length; i++) {
-      try {
-        const currentQuery = DataParse[i].query;
-        if (currentQuery.length === 0) {
-          console.warn(`Empty query found at index ${i}.`);
-          continue;
-        }
-        const setSS = new Set(ss);
-        const setCurrentQuery = new Set(currentQuery);
-        
-        const score = jaccardSimilarity(setSS, setCurrentQuery);
-        console.log(`Comparing: ${ss} with ${currentQuery}, Score: ${score}`);
-
-        if (score > maxscore) {
-          maxscore = score;
-          I = i; 
-        }
-        if (score > 0 && (maxIndex === -1 || score > jaccardSimilarity(new Set(ss), new Set(DataParse[maxIndex].query)))) {
-          maxIndex = i;
-        }
-      } catch (err) {
-        console.error(`Error during loop iteration ${i}:`, err);
-      }
-    }
-    if (I !== -1) {
-      const reply = DataParse[I].reply;
-      console.log("Found matching reply:", reply);
-      if (reply === '.344.') {
-        search(I, ss);
-      } 
-      else {
-        console.log(`\x1b[36m${reply}\x1b[0m`);Q();
-      }
-    } else if (maxIndex !== -1) {
-      const reply = DataParse[maxIndex].reply;
-      console.log("Returning reply with the highest score:", reply);
-      console.log(`\x1b[36m${reply}\x1b[0m`);Q();
-    } else {
-      console.log("No matching query found.");Q();
-    }
-  } catch (err) {
-    console.error('Error in SU_Dep:', err);
-  }
-}
-async function search(index, ss) {
-  console.log(ss)
-  const match = ss.match(/(.+)\s+(.+)$/);
-  if (match) {
-    const two = match[2];
-    const wk = new Bootfunc();
-    const result = await wk.getWikipediaSummary(two);
-    if (result && result.description && result.image) {
-      console.log(`\x1b[36mImage: ${result.image}\nDescription: ${result.description}\x1b[0m`);
-    }Q();
-  }
-}
-
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
 
 
 
