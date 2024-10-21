@@ -1,52 +1,18 @@
-import { Monitor } from 'os-monitor';
-import express from 'express';
+import os from 'os-utils';
 import puppeteer from 'puppeteer'
 import inquirer from 'inquirer';
 import natural from 'natural';
-import SpellChecker from 'spellchecker';
+import code from 'node-cmd';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import Typo from 'typo-js';
+import readline from 'readline';
 import { setTimeout } from 'timers/promises';
+import keypress from 'keypress';
+let email = 'test@mail.com'; let p = `Pro `;
 const apiKey = ''; const searchEngineId = '';
 const feel = { Hqx: 0, Aqx: 0, Sqx: 0, Saqx: 0, Suqx: 0, Default: 10 };
-/**     '""""""""""""""""""""'       
-
-*?        e═-a «     ─▄ww⌐  ─~        
-*?
-*?       ▓',  ²M      ▐''[   ]▌       
-*?
-*?       `*''╖µ       ▐''[   ]▌       
-*?
-*?           ";'┐     ▐,'[   ]▌       
-*?
-*?       ▌µ   ▐,  xk  └▌,╕  ,#        
-*?
-*?       `        `      `            
-*?
-        `````````````````````  
- */
-let email = 'test@mail.com';
-function Q() {
-  inquirer
-    .prompt([
-      {
-        type: 'input',
-        name: 'question',
-        message: 'Question:'
-      }
-    ])
-    .then((answers) => {
-      const query = new UI_SU();
-      query.AI(answers.question, 'test@mail.com').then(() => {
-      }).catch((error) => {
-        console.error('Error:', error);
-        Q();
-      });
-    });
-}
-Q();
 const dictionary = new Typo('en_US');
 const time = new Date();
 const year = time.getFullYear();
@@ -54,6 +20,164 @@ const month = time.getMonth() + 1;
 const day = time.getDate();
 const folderName = `./User/${email}/SuperUser`;
 const fileName = `./User/${email}/SuperUser/${year}_${month}_${day}/memory.sup`;
+const d = `${year}/${month}/${day}`;
+const getFolderSize = (dir) => {
+  let totalSize = 0;
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stats = fs.statSync(filePath);
+
+    if (stats.isDirectory()) {
+      totalSize += getFolderSize(filePath);
+    } else {
+      totalSize += stats.size;
+    }
+  }
+  return totalSize;
+};
+const folderPath = './User';
+const folderSize = getFolderSize(folderPath);
+const f = `${(folderSize / 1024).toFixed(2).slice(0, 4)}`;
+async function displayStats() {
+  return new Promise((resolve) => {
+    os.cpuUsage((cpuUsage) => {
+      const cpuPercent = (cpuUsage * 100).toFixed(2);
+      const totalMemory = os.totalmem();
+      const freeMemory = os.freemem();
+      const usedMemory = totalMemory - freeMemory;
+      const memoryUsage = (usedMemory / totalMemory) * 100;
+
+      resolve({
+        cpu: cpuPercent,
+        ram: memoryUsage.toFixed(2),
+      });
+    });
+  });
+}
+
+async function Consoler() {
+  process.stdout.write('\x1Bc');
+ function clog () {
+  console.log(`\x1b[36m
+         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\x1b[0m`);
+  console.log(`\x1b[32m                                                                         
+                       )))))))))))) )))             ()))))))))))))     ))))))))))                   
+                     ))))         )))))                 )))))))           ))))                      
+                     )))            )))(                )))))))            )))                      
+                    )))))            )))                )))))))            ))                       
+                    ))))))))          ))                )))))))            ))                       
+                     )))))))))))))))                    )))))))            ))                       
+                      )))))))))))))))))                 )))))))            ))                       
+                        ))))))))))))))))                )))))))            ))                       
+                    ))        )))))))))))               )))))))            ))                       
+                    )))             )))))               )))))))            ))                       
+                    ))))             ))))     ))        )))))))            ))                       
+                    )))))           ))))    ))))))       )))))))          ))(                       
+                    ))))))))       ))))     ))))))        )))))))))   )))))                         
+                    )))    )))))))))         ))))            ))))))))))))                                                                                                 
+  \x1b[0m`);
+  console.log(`\x1b[36m
+         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\x1b[0m`);
+  }
+  const stats = await displayStats();
+  const cpu = await stats.cpu; const c = cpu.slice(0, 4);
+  const ram = await stats.ram; const r = ram.slice(0, 4);
+  const maxValue = Math.max(...Object.values(feel));
+  const maxKey = Object.keys(feel).find(key => feel[key] === maxValue);
+  let word = '';
+  switch (maxKey) {
+    case 'Hqx':
+      word = 'Happy  ';
+      break;
+    case 'Aqx':
+      word = 'Angry  ';
+      break;
+    case 'Sqx':
+      word = 'Scared ';
+      break;
+    case 'Saqx':
+      word = 'Sad    ';
+      break;
+    case 'Suqx':
+      word = 'Suspect';
+      break;
+    case 'Default':
+      word = 'Default';
+      break;
+    default:
+      break;
+  }
+  const ui = `
+          >>===========================================================================<<
+          ||                                  ||                                       ||
+          ||                                  ||                                       ||
+          ||                                  ||                 CPU                   ||
+          ||         AI Capacity Folder       ||                ${c}%                  ||
+          ||                                  ||                                       ||
+          ||             ${f}KB               ||                 RAM                   ||
+          ||                                  ||                ${r}%                  ||
+          ||                                  ||                                       ||      
+          || =================================||=======================================||
+          ||                                  ||                                       ||
+          ||            Feel Status           ||                Program                ||
+          ||                                  ||              S.U package              ||
+          ||              ${word}             ||                  ${p}                 ||
+          ||                                  ||              version 0.0.1            ||
+          ||                                  ||                                       ||
+          ||                                  ||                                       ||
+          ||                                  ||                                       ||
+          ||                                  ||                                       ||
+          >>===========================================================================<<`
+  let hasRun = false;
+  function displayMessage(c, ui, d) {
+    if (hasRun) return;
+    if (c < 50) {
+      process.stdout.write('\x1Bc');
+      clog();
+      console.log(`\x1b[34m${ui}\x1b[0m`);
+    } else if (c > 50 && c < 75) {
+      process.stdout.write('\x1Bc');
+      clog();
+      console.log(`\x1b[33m${ui}\x1b[0m`);
+    } else {
+      process.stdout.write('\x1Bc');
+      clog();
+      console.log(`\x1b[31m${ui}\x1b[0m`);
+    }
+    console.log(`\x1b[36mDate: ${d}\x1b[0m`);
+    hasRun = true;
+  }
+  displayMessage(c, ui, new Date());
+}
+function Q() {
+  inquirer
+    .prompt([
+      {
+        type: 'input',
+        name: 'question',
+        message: 'Question (press "Tab" get info):',
+      }
+    ])
+    .then((answers) => {
+      const query = new UI_SU();
+      query.AI(answers.question, email).then(() => {
+      }).catch((error) => {
+        console.error('Error:', error);
+        Q();
+      });
+    });
+} Q();
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal: true 
+});
+rl.input.on('data', (input) => {
+  if (input.toString() === '\t') {
+    Consoler();
+  }
+});
 if (!fs.existsSync(`./User/${email}//SuperUser/${year}_${month}_${day}`)) { fs.mkdirSync(`./User/${email}//SuperUser/${year}_${month}_${day}`); }
 fs.readFile(fileName, 'utf8', (err, data) => {
   if (err) {
@@ -61,39 +185,6 @@ fs.readFile(fileName, 'utf8', (err, data) => {
   }
 });
 class UI_SU {
-  async Monitor() {
-    const monitor = new Monitor();
-    // basic usage
-    monitor.start();
-    // define handler that will always fire every cycle
-    monitor.on('monitor', (event) => {
-      console.log(event.type, 'This event always happens on each monitor cycle!');
-    });
-    // define handler for a too high 1-minute load average
-    monitor.on('loadavg1', (event) => {
-      console.log(event.type, 'Load average is exceptionally high!');
-    });
-    // define handler for a too low free memory
-    monitor.on('freemem', (event) => {
-      console.log(event.type, 'Free memory is very low!');
-    });
-    // define a throttled handler
-    monitor.throttle('loadavg5', (event) => {
-      // whatever is done here will not happen
-      // more than once every 5 minutes(300000 ms)
-
-    }, monitor.minutes(5));
-    // change config while monitor is running
-    monitor.config({
-      freemem: 0.3 // alarm when 30% or less free memory available
-    });
-    // stop monitor
-    monitor.stop();
-    // check whether monitor is running or not
-    monitor.isRunning(); // -> true / false
-    // use as readable stream
-    monitor.start({ stream: true }).pipe(process.stdout);
-  }
   async AI(s, email) {
     if (s && email) {
       let Maxquery = 3;
@@ -207,7 +298,7 @@ class UI_SU {
       }
       let hasLogged = true;
       let oneload = true;
-      let Remessage = {a: '', b: ''};
+      let Remessage = { a: '', b: '' };
       const matchedTexts = [];
       let DataS = DataSU.toString();
 
@@ -237,7 +328,7 @@ class UI_SU {
             if (hasLogged) {
               const randomIndex = Math.floor(Math.random() * matchedTexts.length);
               const selectedText = matchedTexts[randomIndex].replys;
-              Remessage = {a: selectedText, b: fells};
+              Remessage = { a: selectedText, b: fells };
               hasLogged = false;
               const fe = new Fell;
               switch (fells) {
@@ -269,7 +360,7 @@ class UI_SU {
               const randomIndex = Math.floor(Math.random() * matchedTexts.length);
               const selectedText = matchedTexts[randomIndex].replys;
               const feeling = matchedTexts[randomIndex].fells;
-              Remessage = {a: selectedText, b: feeling};
+              Remessage = { a: selectedText, b: feeling };
               oneload = false;
               const fe = new Fell;
               switch (feeling) {
@@ -298,7 +389,7 @@ class UI_SU {
           }
         });
       });
-      console.log(`\x1b[32m${Remessage.a} => ${Remessage.b}\x1b[0m`);Q();
+      console.log(`\x1b[32m${Remessage.a} => ${Remessage.b}\x1b[0m`); Q();
     }
     else if (queryAuto.startsWith('Element')) {
       const eregex = /Element:([^+]+)\+Setting:([^+]+)\+Search:(.+)/g;
@@ -454,7 +545,7 @@ async function SU_Dep(s, DataSU) {
 
         const score = jaccardSimilarity(setSS, setCurrentQuery);
         if (score > maxscore) {
-          maxscore = score; 
+          maxscore = score;
           if (0.9 > score) { maxscore = -1 }
           I = i;
         }
@@ -632,6 +723,31 @@ async function Train(q, r, f, DataSU) {
     message = `Error: ${err}`;
   }
   return message;
+}
+class Code_Edit_Used {
+  /**
+   * ! Only Usb Debug modde
+   * TODO: Use the node cmd fs => create a file and run nodejs program.
+   * ? AI creatable script file and runable.  
+   */
+  Edit(edit) {
+
+  }
+  Used(use) {
+
+  }
+  Format(status) {
+
+  }
+  Process(status) {
+
+  }
+  Fix(fix) {
+
+  }
+  Power(status) {
+
+  }
 }
 /**
  * ?      Hqx     Aqx     Sqx    Saqx    Suqx
