@@ -1,17 +1,14 @@
 import os from 'os-utils';
-import puppeteer from 'puppeteer'
 import inquirer from 'inquirer';
-import natural from 'natural';
 import code from 'node-cmd';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import Typo from 'typo-js';
 import readline from 'readline';
-import { setTimeout } from 'timers/promises';
-import keypress from 'keypress';
-let email = 'test@mail.com'; let p = `Pro `;
-const apiKey = ''; const searchEngineId = '';
+import puppeteer from 'puppeteer';
+let email = 'test@mail.com'; let p = `Pro `; let dbg = { bash: 0, path: '', file: '', code: '' };
+const apiKey = 'AIzaSyDgIUU6T4PoqNrVy9FVtvs7W4VZDmxH1Bk'; const searchEngineId = 'f426500cb44ff4fc6';
 const feel = { Hqx: 0, Aqx: 0, Sqx: 0, Saqx: 0, Suqx: 0, Default: 10 };
 const dictionary = new Typo('en_US');
 const time = new Date();
@@ -58,10 +55,10 @@ async function displayStats() {
 
 async function Consoler() {
   process.stdout.write('\x1Bc');
- function clog () {
-  console.log(`\x1b[36m
+  function clog() {
+    console.log(`\x1b[36m
          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\x1b[0m`);
-  console.log(`\x1b[32m                                                                         
+    console.log(`\x1b[32m                                                                         
                        )))))))))))) )))             ()))))))))))))     ))))))))))                   
                      ))))         )))))                 )))))))           ))))                      
                      )))            )))(                )))))))            )))                      
@@ -77,7 +74,7 @@ async function Consoler() {
                     ))))))))       ))))     ))))))        )))))))))   )))))                         
                     )))    )))))))))         ))))            ))))))))))))                                                                                                 
   \x1b[0m`);
-  console.log(`\x1b[36m
+    console.log(`\x1b[36m
          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\x1b[0m`);
   }
   const stats = await displayStats();
@@ -171,7 +168,7 @@ function Q() {
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
-  terminal: true 
+  terminal: true
 });
 rl.input.on('data', (input) => {
   if (input.toString() === '\t') {
@@ -406,7 +403,7 @@ class UI_SU {
   }
 }
 class Bootfunc {
-  File(SearchF) {
+  async File(SearchF) {
     const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${SearchF}`;
     fetch(url)
       .then(response => response.json())
@@ -439,6 +436,13 @@ class Bootfunc {
         } catch { }
       });
   }
+  async Weather(from) {
+    let link = `https://www.google.com/search?q=${from}weather`;
+    const browser = await puppeteer.launch({ headless: "new" }); const page = await browser.newPage();
+    await page.goto(link, { waitUntil: 'domcontentloaded' }, { timeout: 0 }); await page.waitForNavigation();
+    const element = await page.$('.UQt4rd'); const text = await element.getProperty('innerText');
+    const textValue = await text.jsonValue(); if (textValue) { return textValue }
+  }
   async GoogleExample(SearchG, Element, Setting) {
     const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${SearchG}`;
     try {
@@ -447,9 +451,9 @@ class Bootfunc {
       const { items } = data;
 
       if (data && Array.isArray(items) && items.length > 0) {
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ headless: false });
         const page = await browser.newPage();
-        let result = [];
+        let result = []; let aray_str = '';
         for (let i = 0; i < items.length; i++) {
           const link = items[i].link;
           if (!link) continue;
@@ -464,12 +468,29 @@ class Bootfunc {
               const htmlResults = await page.$$eval(Element, el => el.map(element => element.innerHTML));
               result.push(...htmlResults.map(item => item));
               break;
-
             case "text":
-              const textResults = await page.$$eval(Element, el => el.map(element => element.innerText));
-              result.push(...textResults.map(item => item));
-              break;
+              try {
+                await page.reload();
+                page.setDefaultNavigationTimeout(0);
+                await page.waitForSelector(Element, { timeout: 5000 });
 
+                const elements = await page.$$(Element);
+
+                if (elements.length > 0) {
+                  const textResults = await Promise.all(
+                    elements.map(async element => {
+                      return await page.evaluate(el => el.textContent, element);
+                    })
+                  );
+
+                  aray_str += textResults.join('\n');
+                } else {
+                  console.log('No elements found on the page.');
+                }
+              } catch (error) {
+                console.error('Error occurred:', error);
+              }
+              break;
             case "src":
               const srcResults = await page.$$eval(Element, el => el.map(element => element.src));
               result.push(...srcResults.map(item => item));
@@ -483,7 +504,13 @@ class Bootfunc {
             default:
               break;
           }
-          return result;
+          if (result.length > 0) {
+            return result;
+          }
+          else {
+            result.push(aray_str);
+            return result;
+          }
         }
 
         await browser.close();
@@ -546,7 +573,7 @@ async function SU_Dep(s, DataSU) {
         const score = jaccardSimilarity(setSS, setCurrentQuery);
         if (score > maxscore) {
           maxscore = score;
-          if (0.9 > score) { maxscore = -1 }
+          if (0.8 > score) { maxscore = -1 }
           I = i;
         }
         if (score > 0 && (maxIndex === -1 || score > jaccardSimilarity(new Set(ss), new Set(DataParse[maxIndex].query)))) {
@@ -558,6 +585,7 @@ async function SU_Dep(s, DataSU) {
     }
     const TrainRegex = /q=>([^⁂]+)⁂r=>([^⁂]+)⁂f=>([^⁂]+)⁂$/g
     const ControlRegex = /Control:([^⁂]+)⁂$/g;
+    const WeatherRegex = /Weather:>(.+)/g
     if (TrainRegex.test(s)) {
       s.replace(TrainRegex, (match, q, r, f) => {
         async function Retrain() {
@@ -573,6 +601,15 @@ async function SU_Dep(s, DataSU) {
           const stat = await CONTROL.Status(num);
           console.log(`\x1b[36m${stat}\x1b[0m`); Q();
         } Recontrol();
+      });
+    }
+    else if (WeatherRegex.test(s)) {
+      s.replace(WeatherRegex, (match, q) => {
+        async function Retrain() {
+          const bot = new Bootfunc;
+          const retrain = await bot.Weather(q);
+          console.log(`\x1b[36m${retrain}\x1b[0m`); Q();
+        } Retrain();
       });
     }
     else if (I !== -1) {
@@ -605,9 +642,49 @@ async function SU_Dep(s, DataSU) {
         }
       }
       else {
-        const result = await search(I, ss); Q();
-        for (let i = 0; i < result.length; i++) {
-          console.log(`\x1b[36mImage: ${result[i].image}\nDescription: ${result[i].description}\x1b[0m`);
+        const JaccardSimilarity = (setA, setB) => {
+          const intersection = [...setA].filter(x => setB.has(x));
+          const union = new Set([...setA, ...setB]);
+          return intersection.length / union.size;
+        };
+        let max = 0; let In = 0;
+        const goo = new Bootfunc;
+        const res = await goo.GoogleExample(s, 'pre', 'text');
+        /**
+         * @argument await goo.GoogleExample(word, Element, Setting);
+         * @param  Element list is inside a code and addingable setting.
+         */
+        if (res.length > 0) {
+          for (let i = 0; i < res.length; i++) {
+            const setSS = new Set(s);
+            const setCurrentQuery = new Set(res[i]);
+            const score = JaccardSimilarity(setSS, setCurrentQuery);
+            if (score > max) {
+              max = score;
+              In = i;
+            }
+            if (i = res.length) {
+              const processSummary = async (s, res, In) => {
+                try {
+                  const { default: summary } = await import('node-summary');
+                  summary(s, res[In], (err, result) => {
+                    if (err) {
+                      console.log(`\x1b[36m${res[In]}\x1b[0m`);
+                      Q();
+                    } else {
+                      console.log(`\x1b[36m${result}\x1b[0m`);
+                      Q();
+                    }
+                  });
+                } catch {
+                  console.log(`\x1b[36m${res[In]}\x1b[0m`);
+                  Q();
+                }
+              };
+
+              await processSummary(s, res, In);
+            }
+          }
         }
       }
     }
@@ -628,6 +705,10 @@ async function search(index, ss) {
   return resultlist;
 }
 class Fell {
+  /**
+   * @description Fell status function 
+   * @example const fe = new Fell; fe.Hqx(5)
+   */
   async Hqx(index) {
     if (100 >= feel.Hqx) {
       feel.Hqx = feel.Hqx + index;
@@ -698,6 +779,13 @@ class Control {
            */
           message = 'Diagnostic fix is not implemented yet.';
           break;
+        case '4':
+          message = 'Power of';
+          process.exit(0);
+          break;
+        case '5':
+          message = 'Diagnostic fix is not implemented yet.';
+          break;
         default:
           message = 'Invalid code!';
           break;
@@ -724,14 +812,16 @@ async function Train(q, r, f, DataSU) {
   }
   return message;
 }
+
 class Code_Edit_Used {
   /**
    * ! Only Usb Debug modde
    * TODO: Use the node cmd fs => create a file and run nodejs program.
    * ? AI creatable script file and runable.  
+   * @todo Usb debug mode
    */
-  Edit(edit) {
-
+  async Edit(edit) {
+    await fsp.writeFile(dbg.file, dbg.code);
   }
   Used(use) {
 
@@ -746,6 +836,23 @@ class Code_Edit_Used {
 
   }
   Power(status) {
+
+  }
+}
+class Job {
+  /**
+   * ? Job program advanced class
+   */
+  Start() {
+
+  }
+  Finish() {
+
+  }
+  Remission() {
+
+  }
+  Joblist() {
 
   }
 }
@@ -874,6 +981,7 @@ const elementsList = [
   "video",    // <video> - video content
   "wbr"       // <wbr> - word break opportunity
 ];
+
 
 
 
